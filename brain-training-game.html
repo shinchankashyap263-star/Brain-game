@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NEUROSPHERE — Brain Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#05060d;
+  --panel:#0c1020;
+  --panel-2:#10162b;
+  --cyan:#4ff0ff;
+  --violet:#9d6bff;
+  --magenta:#ff4fd8;
+  --amber:#ffb648;
+  --green:#4dffb4;
+  --red:#ff5a6e;
+  --line:rgba(150,170,255,0.14);
+  --text:#e7ecff;
+  --dim:#8590b8;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Rajdhani',sans-serif;
+  background:var(--void);
+  color:var(--text);
+  overflow-x:hidden;
+  min-height:100vh;
+  position:relative;
+}
+canvas#bg{
+  position:fixed; inset:0; width:100%; height:100%; z-index:0; opacity:0.55;
+}
+.app{
+  position:relative; z-index:1;
+  max-width:520px;
+  margin:0 auto;
+  min-height:100vh;
+  display:flex; flex-direction:column;
+  padding:18px 16px 34px;
+}
+h1,h2,h3{font-family:'Orbitron',sans-serif; margin:0;}
+::selection{background:var(--violet); color:#000;}
+
+/* ---------- header ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+}
+.brand .mark{
+  width:34px; height:34px; border-radius:9px;
+  background:conic-gradient(from 180deg, var(--cyan), var(--violet), var(--magenta), var(--cyan));
+  box-shadow:0 0 18px rgba(157,107,255,0.6);
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.brand .title{
+  font-size:16px; letter-spacing:2px; font-weight:700;
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.brand .sub{font-size:10px; color:var(--dim); letter-spacing:3px; margin-top:-2px;}
+.hud{display:flex; gap:8px;}
+.hud .chip{
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 10px; text-align:center; min-width:52px;
+}
+.hud .chip .v{font-family:'Orbitron'; font-size:14px; font-weight:700; color:var(--cyan);}
+.hud .chip .l{font-size:9px; color:var(--dim); letter-spacing:1px;}
+
+/* ---------- generic panel ---------- */
+.panel{
+  background:linear-gradient(160deg, var(--panel), var(--panel-2));
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.panel::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity:0.5;
+}
+.screen{display:none; flex:1; flex-direction:column; gap:14px;}
+.screen.active{display:flex;}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px;
+  border:none; border-radius:12px; padding:14px 18px; font-size:15px;
+  cursor:pointer; color:var(--void);
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  box-shadow:0 6px 20px rgba(79,240,255,0.25);
+  transition:transform .15s ease, box-shadow .15s ease;
+  -webkit-user-select:none; user-select:none;
+}
+.btn:active{transform:scale(0.96);}
+.btn.ghost{
+  background:transparent; color:var(--text); border:1px solid var(--line);
+  box-shadow:none;
+}
+.btn.block{width:100%;}
+.btn.danger{background:linear-gradient(90deg,var(--red),#ff8a5a); color:#1a0505;}
+.btn:disabled{opacity:0.4; pointer-events:none;}
+
+/* ---------- start screen ---------- */
+.hero{
+  text-align:center; padding:22px 6px 8px;
+}
+.hero h2{font-size:26px; letter-spacing:1px; line-height:1.3;}
+.hero .accent{
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.hero p{color:var(--dim); font-size:14px; margin-top:8px; line-height:1.5;}
+
+.game-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;
+}
+.game-card{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:12px; text-align:center;
+}
+.game-card .ico{font-size:22px;}
+.game-card .name{font-size:11px; margin-top:4px; color:var(--dim); letter-spacing:0.5px;}
+
+.stat-row{display:flex; gap:10px; margin-top:14px;}
+.stat-box{
+  flex:1; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:12px; text-align:center;
+}
+.stat-box .big{font-family:'Orbitron'; font-size:20px; font-weight:700; color:var(--amber);}
+.stat-box .lab{font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:2px;}
+
+/* ---------- round header ---------- */
+.round-head{
+  display:flex; justify-content:space-between; align-items:center;
+}
+.round-head .gtitle{font-size:13px; letter-spacing:2px; color:var(--violet); font-family:'Orbitron';}
+.round-head .lap{font-size:11px; color:var(--dim);}
+.timerbar{
+  height:6px; border-radius:6px; background:rgba(255,255,255,0.06); overflow:hidden; margin-top:8px;
+}
+.timerbar .fill{
+  height:100%; width:100%; border-radius:6px;
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  transition:width linear;
+}
+.prompt{
+  text-align:center; font-size:15px; color:var(--text); min-height:20px; line-height:1.4;
+}
+
+/* ---------- memory / simon tiles ---------- */
+.tile-grid{
+  display:grid; gap:12px; margin:10px auto; width:100%;
+}
+.tile{
+  aspect-ratio:1/1; border-radius:16px; border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron'; font-size:20px; font-weight:700; color:rgba(255,255,255,0.5);
+  cursor:pointer; transition:transform .1s ease, filter .15s ease;
+  background:var(--panel-2);
+}
+.tile:active{transform:scale(0.94);}
+.tile.lit{
+  filter:brightness(1.9) saturate(1.4);
+  box-shadow:0 0 24px currentColor;
+  transform:scale(1.03);
+}
+.tile.c0{background:#1c3a5e; color:var(--cyan);}
+.tile.c1{background:#3a1c5e; color:var(--violet);}
+.tile.c2{background:#5e1c46; color:var(--magenta);}
+.tile.c3{background:#5e4a1c; color:var(--amber);}
+.tile.c4{background:#1c5e3f; color:var(--green);}
+.tile.c5{background:#5e1c1c; color:var(--red);}
+.tile.correct{outline:3px solid var(--green);}
+.tile.wrong{outline:3px solid var(--red);}
+
+/* ---------- choice buttons ---------- */
+.choice-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;
+}
+.choice{
+  background:var(--panel-2); border:1px solid var(--line); border-radius:14px;
+  padding:16px 8px; text-align:center; font-family:'Orbitron'; font-size:17px; font-weight:700;
+  cursor:pointer; color:var(--text); transition:transform .1s ease, background .15s ease;
+}
+.choice:active{transform:scale(0.95);}
+.choice.correct{background:rgba(77,255,180,0.18); border-color:var(--green); color:var(--green);}
+.choice.wrong{background:rgba(255,90,110,0.18); border-color:var(--red); color:var(--red);}
+
+/* ---------- reaction test ---------- */
+.reaction-zone{
+  height:230px; border-radius:18px; display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:8px; font-family:'Orbitron'; font-size:18px; font-weight:700;
+  border:1px solid var(--line); cursor:pointer; user-select:none;
+  transition:background .12s ease;
+  background:var(--panel-2); color:var(--dim);
+}
+.reaction-zone.wait{background:linear-gradient(160deg,#3a1c1c,#2a1010); color:var(--red);}
+.reaction-zone.go{background:linear-gradient(160deg,#0f3a2a,#0a2a1e); color:var(--green);}
+.reaction-zone.tooearly{background:linear-gradient(160deg,#3a1c1c,#2a1010); color:var(--amber);}
+
+/* ---------- feedback flash ---------- */
+.feedback{
+  text-align:center; font-family:'Orbitron'; font-weight:700; font-size:15px;
+  padding:10px; border-radius:12px; opacity:0; transition:opacity .2s ease; letter-spacing:1px;
+}
+.feedback.show.good{opacity:1; color:var(--green); background:rgba(77,255,180,0.1); border:1px solid rgba(77,255,180,0.3);}
+.feedback.show.bad{opacity:1; color:var(--red); background:rgba(255,90,110,0.1); border:1px solid rgba(255,90,110,0.3);}
+.feedback.show.info{opacity:1; color:var(--cyan); background:rgba(79,240,255,0.1); border:1px solid rgba(79,240,255,0.3);}
+
+/* ---------- results screen ---------- */
+.score-orb{
+  width:150px; height:150px; margin:6px auto 4px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  background:radial-gradient(circle at 35% 30%, rgba(157,107,255,0.35), transparent 60%), var(--panel);
+  border:1px solid var(--line);
+  box-shadow:0 0 50px rgba(157,107,255,0.35), inset 0 0 30px rgba(79,240,255,0.08);
+}
+.score-orb .num{font-family:'Orbitron'; font-size:38px; font-weight:900; color:var(--text);}
+.score-orb .lab{font-size:10px; color:var(--dim); letter-spacing:2px; margin-top:2px;}
+
+.bars{display:flex; flex-direction:column; gap:12px; margin-top:16px;}
+.bar-item .top{display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--dim); letter-spacing:1px;}
+.bar-item .top b{color:var(--text); font-family:'Orbitron'; font-size:12px;}
+.bar-track{height:9px; border-radius:6px; background:rgba(255,255,255,0.06); overflow:hidden;}
+.bar-fill{height:100%; border-radius:6px; width:0%; transition:width 1s cubic-bezier(.2,.9,.3,1);}
+.bar-fill.memory{background:linear-gradient(90deg,#4ff0ff,#2a9fff);}
+.bar-fill.logic{background:linear-gradient(90deg,#9d6bff,#6b3fff);}
+.bar-fill.speed{background:linear-gradient(90deg,#ffb648,#ff7a3f);}
+.bar-fill.focus{background:linear-gradient(90deg,#4dffb4,#1fbf8a);}
+
+.summary-row{display:flex; gap:10px; margin-top:16px;}
+.summary-box{flex:1; text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 6px;}
+.summary-box .v{font-family:'Orbitron'; font-size:16px; color:var(--cyan); font-weight:700;}
+.summary-box .l{font-size:9px; color:var(--dim); letter-spacing:1px; margin-top:2px;}
+
+.verdict{
+  text-align:center; margin-top:16px; padding:14px; border-radius:14px;
+  background:linear-gradient(160deg, rgba(157,107,255,0.12), rgba(79,240,255,0.05));
+  border:1px solid var(--line); font-size:14px; line-height:1.5; color:var(--text);
+}
+.verdict b{color:var(--amber);}
+
+.actions{display:flex; gap:10px; margin-top:18px;}
+
+.newbest{
+  text-align:center; font-family:'Orbitron'; font-size:12px; color:var(--amber);
+  letter-spacing:2px; animation:pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+.footer-note{text-align:center; font-size:10px; color:var(--dim); margin-top:auto; padding-top:20px; letter-spacing:1px;}
+
+@media (max-width:360px){
+  .hero h2{font-size:22px;}
+  .score-orb{width:130px; height:130px;}
+  .score-orb .num{font-size:32px;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <div class="title">NEUROSPHERE</div>
+        <div class="sub">BRAIN TRAINING</div>
+      </div>
+    </div>
+    <div class="hud">
+      <div class="chip"><div class="v" id="hudLevel">1</div><div class="l">LVL</div></div>
+      <div class="chip"><div class="v" id="hudScore">0</div><div class="l">SCORE</div></div>
+    </div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="screen-start">
+    <div class="panel">
+      <div class="hero">
+        <h2>Train your <span class="accent">whole mind</span>.</h2>
+        <p>Six adaptive challenges. Difficulty rises as you improve. Get scored across Memory, Logic, Speed &amp; Focus.</p>
+      </div>
+      <div class="game-grid">
+        <div class="game-card"><div class="ico">🧠</div><div class="name">MEMORY<br>CHALLENGE</div></div>
+        <div class="game-card"><div class="ico">🔷</div><div class="name">PATTERN<br>RECOGNITION</div></div>
+        <div class="game-card"><div class="ico">🔢</div><div class="name">NUMBER<br>SEQUENCE</div></div>
+        <div class="game-card"><div class="ico">🧩</div><div class="name">LOGICAL<br>REASONING</div></div>
+        <div class="game-card"><div class="ico">⚡</div><div class="name">REACTION<br>SPEED</div></div>
+        <div class="game-card"><div class="ico">👁️</div><div class="name">VISUAL<br>MEMORY</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="big" id="startHigh">0</div><div class="lab">HIGH SCORE</div></div>
+        <div class="stat-box"><div class="big" id="startToday">0</div><div class="lab">TODAY'S BEST</div></div>
+      </div>
+      <button class="btn block" id="btnStart" style="margin-top:18px;">BEGIN SESSION</button>
+    </div>
+    <div class="footer-note">18 ROUNDS · 3 ESCALATING LAPS · ALL DATA STORED LOCALLY</div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="screen-game">
+    <div class="panel">
+      <div class="round-head">
+        <div class="gtitle" id="gTitle">MEMORY CHALLENGE</div>
+        <div class="lap" id="gRound">Round 1/18</div>
+      </div>
+      <div class="timerbar"><div class="fill" id="timerFill"></div></div>
+      <div class="prompt" id="gPrompt" style="margin-top:14px;">Get ready...</div>
+      <div id="gameArea" style="margin-top:10px;"></div>
+      <div class="feedback" id="feedback">—</div>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen" id="screen-results">
+    <div class="panel">
+      <h3 style="text-align:center; letter-spacing:2px; font-size:14px; color:var(--dim);">SESSION COMPLETE</h3>
+      <div class="score-orb">
+        <div class="num" id="finalScore">0</div>
+        <div class="lab">BRAIN SCORE</div>
+      </div>
+      <div id="newBestBanner" class="newbest" style="display:none;">★ NEW HIGH SCORE ★</div>
+
+      <div class="bars">
+        <div class="bar-item">
+          <div class="top"><span>MEMORY</span><b id="memVal">0</b></div>
+          <div class="bar-track"><div class="bar-fill memory" id="memBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="top"><span>LOGIC</span><b id="logicVal">0</b></div>
+          <div class="bar-track"><div class="bar-fill logic" id="logicBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="top"><span>SPEED</span><b id="speedVal">0</b></div>
+          <div class="bar-track"><div class="bar-fill speed" id="speedBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="top"><span>FOCUS</span><b id="focusVal">0</b></div>
+          <div class="bar-track"><div class="bar-fill focus" id="focusBar"></div></div>
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-box"><div class="v" id="sumCorrect">0</div><div class="l">CORRECT</div></div>
+        <div class="summary-box"><div class="v" id="sumStreak">0</div><div class="l">BEST STREAK</div></div>
+        <div class="summary-box"><div class="v" id="sumAvgTime">0s</div><div class="l">AVG RESPONSE</div></div>
+      </div>
+
+      <div class="verdict" id="verdictText">Analyzing performance...</div>
+
+      <div class="actions">
+        <button class="btn ghost block" id="btnHome">HOME</button>
+        <button class="btn block" id="btnRetry">TRAIN AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= BACKGROUND CANVAS ================= */
+const cv = document.getElementById('bg');
+const ctx = cv.getContext('2d');
+let W,H,particles=[];
+function resize(){
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+for(let i=0;i<50;i++){
+  particles.push({
+    x:Math.random()*W, y:Math.random()*H,
+    r:Math.random()*1.6+0.4,
+    vx:(Math.random()-0.5)*0.15, vy:(Math.random()-0.5)*0.15,
+    hue: Math.random()<0.5 ? '79,240,255' : '157,107,255'
+  });
+}
+function drawBg(){
+  ctx.clearRect(0,0,W,H);
+  for(const p of particles){
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${p.hue},0.5)`;
+    ctx.fill();
+  }
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const a=particles[i], b=particles[j];
+      const dx=a.x-b.x, dy=a.y-b.y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(79,240,255,${0.08*(1-d/110)})`;
+        ctx.lineWidth=1;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+/* ================= STATE ================= */
+const LS_HIGH = 'neurosphere_highscore';
+const LS_DAILY = 'neurosphere_daily';
+
+const GAME_ORDER = ['memory','pattern','numseq','logic','reaction','visual'];
+const TOTAL_LAPS = 3;
+const TOTAL_ROUNDS = GAME_ORDER.length * TOTAL_LAPS;
+
+let state = {};
+function resetState(){
+  state = {
+    round: 0,
+    lap: 1,
+    score: 0,
+    level: 1,
+    streak: 0,
+    bestStreak: 0,
+    correctCount: 0,
+    responseTimes: [],
+    perGame: {
+      memory:{correct:0,total:0,times:[]},
+      pattern:{correct:0,total:0,times:[]},
+      numseq:{correct:0,total:0,times:[]},
+      logic:{correct:0,total:0,times:[]},
+      reaction:{correct:0,total:0,times:[]},
+      visual:{correct:0,total:0,times:[]},
+    },
+    focusPenalties: 0,
+    roundStart: 0,
+    timerHandle: null,
+    countdownHandle: null,
+    accepting: false,
+  };
+}
+resetState();
+
+/* ================= SCREEN NAV ================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateHud(){
+  document.getElementById('hudLevel').textContent = state.level;
+  document.getElementById('hudScore').textContent = state.score;
+}
+
+/* ================= INIT DISPLAY ================= */
+function loadHomeStats(){
+  const high = parseInt(localStorage.getItem(LS_HIGH) || '0', 10);
+  document.getElementById('startHigh').textContent = high;
+  const daily = JSON.parse(localStorage.getItem(LS_DAILY) || '{}');
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('startToday').textContent = daily[today] || 0;
+}
+loadHomeStats();
+
+/* ================= FEEDBACK ================= */
+function flashFeedback(text, kind){
+  const el = document.getElementById('feedback');
+  el.textContent = text;
+  el.className = 'feedback show ' + kind;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.classList.remove('show'); }, 900);
+}
+
+/* ================= TIMER BAR ================= */
+function startTimer(seconds, onExpire){
+  const fill = document.getElementById('timerFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  void fill.offsetWidth; // reflow
+  fill.style.transition = `width ${seconds}s linear`;
+  fill.style.width = '0%';
+  state.roundStart = performance.now();
+  clearTimeout(state.timerHandle);
+  state.timerHandle = setTimeout(()=>{
+    if(state.accepting){ onExpire(); }
+  }, seconds*1000);
+}
+function stopTimer(){
+  clearTimeout(state.timerHandle);
+  document.getElementById('timerFill').style.transition='none';
+}
+function elapsedSeconds(){
+  return (performance.now() - state.roundStart)/1000;
+}
+
+/* ================= SCORING HELPERS ================= */
+function registerResult(gameKey, correct, timeSec, points){
+  const g = state.perGame[gameKey];
+  g.total++;
+  if(correct) g.correct++;
+  g.times.push(timeSec);
+  state.responseTimes.push(timeSec);
+
+  if(correct){
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    state.correctCount++;
+    state.score += points;
+  } else {
+    state.streak = 0;
+    state.focusPenalties++;
+  }
+  state.level = 1 + Math.floor(state.score / 220);
+  updateHud();
+}
+
+/* ================= ROUND ENGINE ================= */
+function nextRound(){
+  state.round++;
+  if(state.round > TOTAL_ROUNDS){
+    finishSession();
+    return;
+  }
+  state.lap = Math.ceil(state.round / GAME_ORDER.length);
+  const gameIndex = (state.round-1) % GAME_ORDER.length;
+  const gameKey = GAME_ORDER[gameIndex];
+  document.getElementById('gRound').textContent = `Round ${state.round}/${TOTAL_ROUNDS} · Lap ${state.lap}`;
+  const titles = {
+    memory:'MEMORY CHALLENGE', pattern:'PATTERN RECOGNITION', numseq:'NUMBER SEQUENCE',
+    logic:'LOGICAL REASONING', reaction:'REACTION SPEED', visual:'VISUAL MEMORY'
+  };
+  document.getElementById('gTitle').textContent = titles[gameKey];
+  document.getElementById('gameArea').innerHTML = '';
+  document.getElementById('gPrompt').textContent = '';
+  state.accepting = false;
+
+  const runners = {
+    memory: runMemory, pattern: runPattern, numseq: runNumSeq,
+    logic: runLogic, reaction: runReaction, visual: runVisual
+  };
+  runners[gameKey](state.lap);
+}
+
+function finishRoundAdvance(delay){
+  setTimeout(nextRound, delay || 900);
+}
+
+/* ================= 1. MEMORY CHALLENGE (Simon-style) ================= */
+function runMemory(lap){
+  const area = document.getElementById('gameArea');
+  const len = 2 + lap; // 3,4,5
+  const colors = 4 + Math.min(lap-1,2); // 4,5,6
+  const seq = Array.from({length:len}, ()=>Math.floor(Math.random()*colors));
+
+  document.getElementById('gPrompt').textContent = 'Watch the sequence...';
+  const grid = document.createElement('div');
+  const cols = colors <= 4 ? 2 : 3;
+  grid.className = 'tile-grid';
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  for(let i=0;i<colors;i++){
+    const t = document.createElement('div');
+    t.className = `tile c${i}`;
+    t.dataset.idx = i;
+    grid.appendChild(t);
+  }
+  area.appendChild(grid);
+  const tiles = [...grid.children];
+
+  let i=0;
+  function playStep(){
+    if(i>0) tiles[seq[i-1]].classList.remove('lit');
+    if(i>=seq.length){
+      tiles[seq[seq.length-1]].classList.remove('lit');
+      beginInput();
+      return;
+    }
+    tiles[seq[i]].classList.add('lit');
+    i++;
+    setTimeout(playStep, 620);
+  }
+  setTimeout(playStep, 500);
+
+  function beginInput(){
+    document.getElementById('gPrompt').textContent = `Repeat the sequence (${seq.length} taps)`;
+    let userSeq = [];
+    state.accepting = true;
+    startTimer(6 + len, ()=>{
+      state.accepting = false;
+      flashFeedback('TIME UP', 'bad');
+      registerResult('memory', false, 6+len, 0);
+      finishRoundAdvance();
+    });
+    tiles.forEach(t=>{
+      t.style.cursor='pointer';
+      t.onclick = ()=>{
+        if(!state.accepting) return;
+        const idx = parseInt(t.dataset.idx,10);
+        userSeq.push(idx);
+        const pos = userSeq.length-1;
+        if(idx !== seq[pos]){
+          t.classList.add('wrong');
+          state.accepting = false;
+          stopTimer();
+          flashFeedback('WRONG SEQUENCE', 'bad');
+          registerResult('memory', false, elapsedSeconds(), 0);
+          finishRoundAdvance();
+          return;
+        }
+        t.classList.add('lit');
+        setTimeout(()=>t.classList.remove('lit'), 200);
+        if(userSeq.length === seq.length){
+          state.accepting = false;
+          stopTimer();
+          const pts = 20 + len*8;
+          flashFeedback(`PERFECT +${pts}`, 'good');
+          registerResult('memory', true, elapsedSeconds(), pts);
+          finishRoundAdvance();
+        }
+      };
+    });
+  }
+}
+
+/* ================= 2. PATTERN RECOGNITION (odd one out) ================= */
+const SHAPES = ['●','■','▲','◆','★','⬟','⬢','✦'];
+function runPattern(lap){
+  const area = document.getElementById('gameArea');
+  const size = Math.min(9 + lap*3, 16); // items in grid
+  const baseShape = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  let oddShape = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  while(oddShape === baseShape) oddShape = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  const oddIndex = Math.floor(Math.random()*size);
+  const baseHue = ['#4ff0ff','#9d6bff','#ff4fd8','#4dffb4'][Math.floor(Math.random()*4)];
+
+  document.getElementById('gPrompt').textContent = 'Tap the shape that is different';
+  const grid = document.createElement('div');
+  grid.className = 'tile-grid';
+  const cols = size <= 9 ? 3 : 4;
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  for(let i=0;i<size;i++){
+    const t = document.createElement('div');
+    t.className = 'tile';
+    t.style.background = 'var(--panel-2)';
+    t.style.color = baseHue;
+    t.style.fontSize = '22px';
+    t.textContent = i===oddIndex ? oddShape : baseShape;
+    t.dataset.odd = (i===oddIndex) ? '1':'0';
+    grid.appendChild(t);
+  }
+  area.appendChild(grid);
+  const tiles = [...grid.children];
+
+  state.accepting = true;
+  startTimer(5 + Math.max(0,3-lap), ()=>{
+    state.accepting = false;
+    flashFeedback('TIME UP', 'bad');
+    registerResult('pattern', false, 5, 0);
+    finishRoundAdvance();
+  });
+
+  tiles.forEach(t=>{
+    t.onclick = ()=>{
+      if(!state.accepting) return;
+      state.accepting = false;
+      stopTimer();
+      const good = t.dataset.odd === '1';
+      t.classList.add(good?'correct':'wrong');
+      if(!good) tiles[oddIndex].classList.add('correct');
+      const pts = good ? (18 + lap*6) : 0;
+      flashFeedback(good?`CORRECT +${pts}`:'MISSED IT', good?'good':'bad');
+      registerResult('pattern', good, elapsedSeconds(), pts);
+      finishRoundAdvance();
+    };
+  });
+}
+
+/* ================= 3. NUMBER SEQUENCE PREDICTION ================= */
+function genSequence(lap){
+  const type = Math.floor(Math.random()*3);
+  let seq=[], answer, options;
+  if(type===0){ // arithmetic
+    const start = Math.floor(Math.random()*10)+1;
+    const step = Math.floor(Math.random()*(4+lap))+2;
+    for(let i=0;i<4;i++) seq.push(start+step*i);
+    answer = start+step*4;
+  } else if(type===1){ // geometric
+    const start = Math.floor(Math.random()*3)+2;
+    const ratio = 2 + (lap>1?Math.floor(Math.random()*2):0);
+    for(let i=0;i<4;i++) seq.push(start*Math.pow(ratio,i));
+    answer = start*Math.pow(ratio,4);
+  } else { // fibonacci-like
+    let a = Math.floor(Math.random()*5)+1, b = Math.floor(Math.random()*5)+2;
+    seq = [a,b];
+    for(let i=0;i<2;i++){ const c=seq[seq.length-1]+seq[seq.length-2]; seq.push(c); }
+    answer = seq[seq.length-1]+seq[seq.length-2];
+  }
+  const opts = new Set([answer]);
+  while(opts.size<4){
+    const delta = Math.floor(Math.random()*10)-5;
+    const v = answer + (delta===0?1:delta);
+    if(v>0) opts.add(v);
+  }
+  options = [...opts].sort(()=>Math.random()-0.5);
+  return {seq, answer, options};
+}
+function runNumSeq(lap){
+  const area = document.getElementById('gameArea');
+  const {seq, answer, options} = genSequence(lap);
+  document.getElementById('gPrompt').textContent = 'What comes next in the sequence?';
+  const seqEl = document.createElement('div');
+  seqEl.style.textAlign='center';
+  seqEl.style.fontFamily = "'Orbitron'";
+  seqEl.style.fontSize='24px';
+  seqEl.style.letterSpacing='4px';
+  seqEl.style.margin = '14px 0';
+  seqEl.style.color = 'var(--cyan)';
+  seqEl.textContent = seq.join('  →  ') + '  →  ?';
+  area.appendChild(seqEl);
+
+  const grid = document.createElement('div');
+  grid.className = 'choice-grid';
+  options.forEach(opt=>{
+    const c = document.createElement('div');
+    c.className='choice';
+    c.textContent = opt;
+    c.dataset.val = opt;
+    grid.appendChild(c);
+  });
+  area.appendChild(grid);
+
+  state.accepting = true;
+  startTimer(8 - Math.min(lap,3), ()=>{
+    state.accepting=false;
+    flashFeedback('TIME UP','bad');
+    registerResult('numseq', false, 8, 0);
+    finishRoundAdvance();
+  });
+
+  [...grid.children].forEach(c=>{
+    c.onclick = ()=>{
+      if(!state.accepting) return;
+      state.accepting=false;
+      stopTimer();
+      const val = parseInt(c.dataset.val,10);
+      const good = val === answer;
+      c.classList.add(good?'correct':'wrong');
+      if(!good){
+        [...grid.children].find(x=>parseInt(x.dataset.val,10)===answer).classList.add('correct');
+      }
+      const pts = good ? (16 + lap*6) : 0;
+      flashFeedback(good?`CORRECT +${pts}`:`ANSWER: ${answer}`, good?'good':'bad');
+      registerResult('numseq', good, elapsedSeconds(), pts);
+      finishRoundAdvance();
+    };
+  });
+}
+
+/* ================= 4. LOGICAL REASONING ================= */
+function genLogic(lap){
+  const pool = [
+    ()=>{
+      const names=['Aarav','Nisha','Kabir','Meera','Dev','Zoya'];
+      const [a,b,c] = names.sort(()=>Math.random()-0.5);
+      return {
+        q: `${a} is taller than ${b}. ${b} is taller than ${c}. Who is the shortest?`,
+        options:[a,b,c].sort(()=>Math.random()-0.5),
+        answer:c
+      };
+    },
+    ()=>{
+      const items=['Apple','Banana','Carrot','Mango','Potato','Grape'];
+      const fruits=['Apple','Banana','Mango','Grape'];
+      const pick=[...items].sort(()=>Math.random()-0.5).slice(0,4);
+      const odd = pick.find(x=>!fruits.includes(x)) || pick[0];
+      return { q:`Which item does NOT belong with the others?`, options:pick, answer:odd };
+    },
+    ()=>{
+      const a=Math.floor(Math.random()*8)+2, b=Math.floor(Math.random()*8)+2;
+      const sum=a+b, diff=Math.abs(a-b);
+      return {
+        q:`Two numbers add to ${sum} and differ by ${diff}. What is the larger number?`,
+        options:[a,b,Math.max(a,b)+1,Math.max(a,b)-1].map(x=>Math.max(x,0)).sort(()=>Math.random()-0.5),
+        answer:Math.max(a,b)
+      };
+    },
+    ()=>{
+      const seqLetters=['A','C','E','G','I'];
+      const start = Math.floor(Math.random()*3);
+      const shown = seqLetters.slice(start,start+3);
+      const answer = seqLetters[start+3];
+      const options = new Set([answer]);
+      while(options.size<4){
+        const rnd = String.fromCharCode(65+Math.floor(Math.random()*20));
+        options.add(rnd);
+      }
+      return { q:`Letter pattern: ${shown.join(', ')}, ... What comes next?`, options:[...options].sort(()=>Math.random()-0.5), answer };
+    },
+    ()=>{
+      const total = Math.floor(Math.random()*20)+20;
+      const groupA = Math.floor(total*0.4);
+      return {
+        q:`If ALL Zorps are Blips, and this creature is a Zorp, is it definitely a Blip?`,
+        options:['Yes','No','Cannot say','Only sometimes'],
+        answer:'Yes'
+      };
+    }
+  ];
+  const gen = pool[Math.floor(Math.random()*pool.length)];
+  return gen();
+}
+function runLogic(lap){
+  const area = document.getElementById('gameArea');
+  const {q, options, answer} = genLogic(lap);
+  document.getElementById('gPrompt').textContent = q;
+  const grid = document.createElement('div');
+  grid.className = 'choice-grid';
+  options.forEach(opt=>{
+    const c = document.createElement('div');
+    c.className='choice';
+    c.style.fontFamily = "'Rajdhani'";
+    c.style.fontWeight='700';
+    c.textContent = opt;
+    c.dataset.val = opt;
+    grid.appendChild(c);
+  });
+  area.appendChild(grid);
+
+  state.accepting = true;
+  startTimer(9 + Math.max(0,2-lap), ()=>{
+    state.accepting=false;
+    flashFeedback('TIME UP','bad');
+    registerResult('logic', false, 9, 0);
+    finishRoundAdvance();
+  });
+
+  [...grid.children].forEach(c=>{
+    c.onclick = ()=>{
+      if(!state.accepting) return;
+      state.accepting=false;
+      stopTimer();
+      const good = c.dataset.val === String(answer);
+      c.classList.add(good?'correct':'wrong');
+      if(!good){
+        const correctEl = [...grid.children].find(x=>x.dataset.val===String(answer));
+        if(correctEl) correctEl.classList.add('correct');
+      }
+      const pts = good ? (18 + lap*7) : 0;
+      flashFeedback(good?`CORRECT +${pts}`:`ANSWER: ${answer}`, good?'good':'bad');
+      registerResult('logic', good, elapsedSeconds(), pts);
+      finishRoundAdvance();
+    };
+  });
+}
+
+/* ================= 5. REACTION SPEED TEST ================= */
+function runReaction(lap){
+  const area = document.getElementById('gameArea');
+  document.getElementById('gPrompt').textContent = 'Wait for GREEN, then tap as fast as you can';
+  const zone = document.createElement('div');
+  zone.className = 'reaction-zone wait';
+  zone.textContent = 'WAIT...';
+  area.appendChild(zone);
+  document.getElementById('timerFill').style.width='0%';
+
+  let goTime=0, ready=false, done=false;
+  const delay = 1200 + Math.random()*(2600 - lap*300);
+  const timeoutId = setTimeout(()=>{
+    ready = true;
+    zone.className = 'reaction-zone go';
+    zone.textContent = 'TAP NOW!';
+    goTime = performance.now();
+  }, delay);
+
+  state.accepting = true;
+  zone.onclick = ()=>{
+    if(!state.accepting || done) return;
+    if(!ready){
+      done = true; state.accepting=false;
+      clearTimeout(timeoutId);
+      zone.className='reaction-zone tooearly';
+      zone.textContent='TOO EARLY';
+      flashFeedback('JUMPED THE GUN','bad');
+      registerResult('reaction', false, 0, 0);
+      finishRoundAdvance();
+      return;
+    }
+    done = true; state.accepting=false;
+    const rt = (performance.now()-goTime)/1000;
+    zone.textContent = `${Math.round(rt*1000)}ms`;
+    const good = rt < 0.9;
+    const pts = good ? Math.max(10, Math.round(50 - rt*40)) : 5;
+    flashFeedback(good?`+${pts} · ${Math.round(rt*1000)}ms`:'TOO SLOW','info');
+    registerResult('reaction', good, rt, pts);
+    finishRoundAdvance();
+  };
+
+  // safety timeout in case they never tap
+  setTimeout(()=>{
+    if(!done && state.accepting){
+      state.accepting=false; done=true;
+      flashFeedback('NO RESPONSE','bad');
+      registerResult('reaction', false, 3, 0);
+      finishRoundAdvance();
+    }
+  }, delay + 2200);
+}
+
+/* ================= 6. VISUAL MEMORY TEST ================= */
+function runVisual(lap){
+  const area = document.getElementById('gameArea');
+  const gridSize = 4; // 4x4 = 16 cells
+  const count = 3 + lap; // 4,5,6 cells to remember
+  const cells = Array.from({length:gridSize*gridSize}, (_,i)=>i);
+  const targets = new Set();
+  while(targets.size < count){
+    targets.add(cells[Math.floor(Math.random()*cells.length)]);
+  }
+  document.getElementById('gPrompt').textContent = 'Memorize the highlighted cells...';
+  const grid = document.createElement('div');
+  grid.className='tile-grid';
+  grid.style.gridTemplateColumns = `repeat(${gridSize},1fr)`;
+  for(let i=0;i<gridSize*gridSize;i++){
+    const t = document.createElement('div');
+    t.className='tile';
+    t.style.background='var(--panel-2)';
+    t.dataset.idx=i;
+    if(targets.has(i)){ t.classList.add('lit'); t.style.color='var(--cyan)'; t.style.background='#1c3a5e'; }
+    grid.appendChild(t);
+  }
+  area.appendChild(grid);
+  const tileEls = [...grid.children];
+
+  setTimeout(()=>{
+    tileEls.forEach(t=>{ t.classList.remove('lit'); t.style.background='var(--panel-2)'; t.style.color=''; });
+    document.getElementById('gPrompt').textContent = `Tap the ${count} cells you memorized`;
+    let picked = new Set();
+    state.accepting = true;
+    startTimer(8 + lap, ()=>{
+      state.accepting=false;
+      revealTruth();
+      flashFeedback('TIME UP','bad');
+      registerResult('visual', false, 8, 0);
+      finishRoundAdvance(1300);
+    });
+
+    function revealTruth(){
+      tileEls.forEach(t=>{
+        const idx = parseInt(t.dataset.idx,10);
+        if(targets.has(idx)) t.classList.add('correct');
+      });
+    }
+
+    tileEls.forEach(t=>{
+      t.onclick=()=>{
+        if(!state.accepting) return;
+        const idx = parseInt(t.dataset.idx,10);
+        if(picked.has(idx)) return;
+        picked.add(idx);
+        const isTarget = targets.has(idx);
+        t.classList.add(isTarget?'correct':'wrong');
+        if(picked.size === count){
+          state.accepting=false;
+          stopTimer();
+          revealTruth();
+          const hits = [...picked].filter(i=>targets.has(i)).length;
+          const good = hits === count;
+          const pts = Math.round((hits/count) * (20 + lap*8));
+          flashFeedback(good?`PERFECT +${pts}`:`${hits}/${count} +${pts}`, good?'good':(hits>0?'info':'bad'));
+          registerResult('visual', good, elapsedSeconds(), pts);
+          finishRoundAdvance(1300);
+        }
+      };
+    });
+  }, 1600 + lap*200);
+}
+
+/* ================= FINISH & SCORING ================= */
+function safeAvg(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+
+function computeCategoryScore(keys){
+  let correct=0, total=0, times=[];
+  keys.forEach(k=>{
+    const g = state.perGame[k];
+    correct += g.correct; total += g.total; times = times.concat(g.times);
+  });
+  if(total===0) return 50;
+  const acc = correct/total;
+  const avgTime = safeAvg(times);
+  const speedFactor = Math.max(0, 1 - Math.min(avgTime,8)/12);
+  const score = Math.round((acc*0.75 + speedFactor*0.25) * 100);
+  return Math.max(0, Math.min(100, score));
+}
+
+function finishSession(){
+  stopTimer();
+  const memoryScore = computeCategoryScore(['memory','visual']);
+  const logicScore = computeCategoryScore(['pattern','numseq','logic']);
+  const reactionTimes = state.perGame.reaction.times;
+  const rAcc = state.perGame.reaction.total ? state.perGame.reaction.correct/state.perGame.reaction.total : 0;
+  const avgRT = safeAvg(reactionTimes);
+  const speedScore = Math.max(0, Math.min(100, Math.round((rAcc*0.5 + Math.max(0,1-avgRT/0.9)*0.5) * 100)));
+  const focusScore = Math.max(0, Math.min(100, Math.round(100 - (state.focusPenalties * (100/TOTAL_ROUNDS)) )));
+  const overall = Math.round(memoryScore*0.3 + logicScore*0.3 + speedScore*0.2 + focusScore*0.2);
+
+  document.getElementById('finalScore').textContent = state.score;
+  animateBar('memBar','memVal', memoryScore);
+  animateBar('logicBar','logicVal', logicScore);
+  animateBar('speedBar','speedVal', speedScore);
+  animateBar('focusBar','focusVal', focusScore);
+
+  document.getElementById('sumCorrect').textContent = `${state.correctCount}/${TOTAL_ROUNDS}`;
+  document.getElementById('sumStreak').textContent = state.bestStreak;
+  document.getElementById('sumAvgTime').textContent = safeAvg(state.responseTimes).toFixed(2)+'s';
+
+  document.getElementById('verdictText').innerHTML = buildVerdict(memoryScore, logicScore, speedScore, focusScore, overall);
+
+  // persist
+  const high = parseInt(localStorage.getItem(LS_HIGH)||'0',10);
+  const newBest = state.score > high;
+  if(newBest) localStorage.setItem(LS_HIGH, String(state.score));
+  document.getElementById('newBestBanner').style.display = newBest ? 'block':'none';
+
+  const daily = JSON.parse(localStorage.getItem(LS_DAILY)||'{}');
+  const today = new Date().toISOString().slice(0,10);
+  daily[today] = Math.max(daily[today]||0, state.score);
+  // keep only last 30 days
+  const keys = Object.keys(daily).sort();
+  while(keys.length>30){ delete daily[keys.shift()]; }
+  localStorage.setItem(LS_DAILY, JSON.stringify(daily));
+
+  show('screen-results');
+}
+
+function animateBar(barId, valId, value){
+  document.getElementById(valId).textContent = value;
+  requestAnimationFrame(()=>{
+    document.getElementById(barId).style.width = value+'%';
+  });
+}
+
+function buildVerdict(mem, logic, speed, focus, overall){
+  const scores = {Memory:mem, Logic:logic, Speed:speed, Focus:focus};
+  const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+  const worst = Object.entries(scores).sort((a,b)=>a[1]-b[1])[0][0];
+  let tier;
+  if(overall>=85) tier='Elite Cognitive Performance';
+  else if(overall>=70) tier='Sharp &amp; Well-Trained Mind';
+  else if(overall>=50) tier='Solid Foundation';
+  else tier='Warming Up';
+  return `<b>${tier}</b> — Overall Brain Score: <b>${overall}</b>. Your strongest area was <b>${best}</b>. Focus your next session on <b>${worst}</b> to round out your cognitive profile.`;
+}
+
+/* ================= WIRE UP ================= */
+document.getElementById('btnStart').onclick = ()=>{
+  resetState();
+  updateHud();
+  show('screen-game');
+  nextRound();
+};
+document.getElementById('btnRetry').onclick = ()=>{
+  resetState();
+  updateHud();
+  show('screen-game');
+  nextRound();
+};
+document.getElementById('btnHome').onclick = ()=>{
+  loadHomeStats();
+  show('screen-start');
+};
+
+})();
+</script>
+</body>
+</html>
